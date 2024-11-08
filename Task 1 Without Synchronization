@@ -1,38 +1,67 @@
+import random
+import threading
 import time
-from threading import Thread
-
-import job_generator
 
 
-class JobExecutorWithoutSync:
+class JobGenerator:
+    def __init__(self):
+        self.users = ['P1', 'P2', 'P3', 'P4', 'P5']
+        self.job_queue = {user: [] for user in self.users}
+
+    def generate_job(self, user):
+        job_type = random.choice(['Print', 'Scan'])
+        job_length_category = random.choice(['short', 'medium', 'large'])
+        pages = {
+            'short': random.randint(1, 5),
+            'medium': random.randint(6, 15),
+            'large': random.randint(16, 50)
+        }[job_length_category]
+        arrival_time = random.randint(1, 5)  # Random arrival time between 1 and 5 seconds
+        job = {'user': user, 'type': job_type, 'pages': pages, 'arrival_time': arrival_time}
+        self.job_queue[user].append(job)
+
+    def generate_all_jobs(self):
+        for user in self.users:
+            for _ in range(10):  # Generate 10 jobs per user
+                self.generate_job(user)
+
+    def get_job_queue(self):
+        return self.job_queue
+
+
+class JobExecutor:
     def __init__(self, job_queue):
         self.job_queue = job_queue
 
     def execute_job(self, job):
-        print(f"Starting {job['type']} Job for User {job['user']} ({job['pages']} pages)")
+        print(f"Starting {job['type']} job for {job['user']} - {job['pages']} pages.")
+        for page in range(1, job['pages'] + 1):
+            # Simulate processing time for each page
+            time.sleep(1)  # 1 second per page
+            print(f"{job['type']} Job for {job['user']}: Page {page}/{job['pages']} completed.")
+            # Checkpoint where pre-emption could occur without any synchronization
 
-        for page in range(1, job["pages"] + 1):
-            print(
-                f"User {job['user']} {job['type']} Job - Page {page} of {job['pages']}, Arrival Time: {job['arrival_time']} seconds")
-            time.sleep(1)  # Simulate 1 second per page
+        print(f"{job['type']} job for {job['user']} completed.\n")
 
-            # Pre-emption - after each page, switch to another job
-            # (No actual switching mechanism here; we're just logging page-by-page progress)
-
-    def run_jobs(self):
+    def run_all_jobs_without_sync(self):
+        # Create a thread for each job to simulate concurrent execution without synchronization
         threads = []
-        for job in self.job_queue:
-            # Each job runs in a separate thread to simulate simultaneous access without sync
-            thread = Thread(target=self.execute_job, args=(job,))
-            threads.append(thread)
-            thread.start()
+        for user, jobs in self.job_queue.items():
+            for job in jobs:
+                thread = threading.Thread(target=self.execute_job, args=(job,))
+                threads.append(thread)
+                thread.start()  # Start each thread
 
+        # Wait for all threads to complete
         for thread in threads:
             thread.join()
 
 
-# Execute without synchronization
-job_executor = JobExecutorWithoutSync(job_generator.job_queue)
-job_executor.run_jobs()
+# Generate jobs
+job_generator = JobGenerator()
+job_generator.generate_all_jobs()
+job_queue = job_generator.get_job_queue()
 
-
+# Execute jobs without synchronization
+job_executor = JobExecutor(job_queue)
+job_executor.run_all_jobs_without_sync()
