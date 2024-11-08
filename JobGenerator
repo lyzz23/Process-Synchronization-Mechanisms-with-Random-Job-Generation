@@ -1,0 +1,51 @@
+import random
+import datetime
+
+# Define the job types and page ranges for each job length
+JOB_TYPES = ["Print", "Scan"]
+JOB_LENGTHS = {
+    "short": (1, 5),
+    "medium": (6, 15),
+    "large": (16, 50)
+}
+
+
+class JobGenerator:
+    def __init__(self, users):
+        self.users = users
+        self.job_queue = []
+
+    def generate_job(self, user, start_time):
+        job_type = random.choice(JOB_TYPES)  # Randomly choose print or scan
+        length_category = random.choice(list(JOB_LENGTHS.keys()))  # Randomly choose job length category
+        pages = random.randint(*JOB_LENGTHS[length_category])  # Number of pages based on length
+        interval = random.randint(1, 5)  # Random interval for arrival time
+        arrival_time = start_time + datetime.timedelta(seconds=interval)
+
+        job = {
+            "user": user,
+            "type": job_type,
+            "pages": pages,
+            "length": length_category,
+            "arrival_time": interval
+        }
+        self.job_queue.append(job)
+        return arrival_time  # Return the new start time
+
+    def generate_jobs_for_all_users(self, job_count=10):
+        for user in self.users:
+            start_time = datetime.datetime.now()
+            for _ in range(job_count):
+                start_time = self.generate_job(user, start_time)
+
+    def display_job_queue(self):
+        for job in self.job_queue:
+            print(f"User {job['user']}: {job['type']} Job, {job['pages']} pages, "
+                  f"Arrival Time: {job['arrival_time']} seconds")
+
+
+# Instantiate and run the job generator
+users = ["P1", "P2", "P3", "P4", "P5"]
+job_generator = JobGenerator(users)
+job_generator.generate_jobs_for_all_users()
+job_generator.display_job_queue()
