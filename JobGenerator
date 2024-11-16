@@ -1,7 +1,7 @@
 import random
 import datetime
 
-# Define the job types and page ranges for each job length
+# Constants for job types and lengths
 JOB_TYPES = ["Print", "Scan"]
 JOB_LENGTHS = {
     "short": (1, 5),
@@ -9,28 +9,28 @@ JOB_LENGTHS = {
     "large": (16, 50)
 }
 
-
 class JobGenerator:
     def __init__(self, users):
-        self.users = users
-        self.job_queue = []
+        self.users = users  # List of users
+        self.job_queue = []  # Shared job queue
 
     def generate_job(self, user, start_time):
-        job_type = random.choice(JOB_TYPES)  # Randomly choose print or scan
-        length_category = random.choice(list(JOB_LENGTHS.keys()))  # Randomly choose job length category
-        pages = random.randint(*JOB_LENGTHS[length_category])  # Number of pages based on length
-        interval = random.randint(1, 5)  # Random interval for arrival time
+        job_type = random.choice(JOB_TYPES)  # Randomly select job type
+        length_category = random.choice(list(JOB_LENGTHS.keys()))  # Randomly select job length
+        pages = random.randint(*JOB_LENGTHS[length_category])  # Randomize pages within range
+        interval = random.randint(1, 5)  # Randomize arrival interval (seconds)
         arrival_time = start_time + datetime.timedelta(seconds=interval)
 
+        # Create a job dictionary
         job = {
             "user": user,
             "type": job_type,
             "pages": pages,
             "length": length_category,
-            "arrival_time": interval
+            "arrival_time": arrival_time.strftime("%H:%M:%S")
         }
         self.job_queue.append(job)
-        return arrival_time  # Return the new start time
+        return arrival_time  # Update start time for the next job
 
     def generate_jobs_for_all_users(self, job_count=10):
         for user in self.users:
@@ -38,14 +38,11 @@ class JobGenerator:
             for _ in range(job_count):
                 start_time = self.generate_job(user, start_time)
 
-    def display_job_queue(self):
+    def get_jobs(self):
+        return self.job_queue  # Return the generated job queue
+
+    def display_jobs(self):
         for job in self.job_queue:
             print(f"User {job['user']}: {job['type']} Job, {job['pages']} pages, "
-                  f"Arrival Time: {job['arrival_time']} seconds")
+                  f"Arrival Time: {job['arrival_time']}")
 
-
-# Instantiate and run the job generator
-users = ["P1", "P2", "P3", "P4", "P5"]
-job_generator = JobGenerator(users)
-job_generator.generate_jobs_for_all_users()
-job_generator.display_job_queue()
